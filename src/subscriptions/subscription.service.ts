@@ -15,6 +15,26 @@ export class SubscriptionService {
     return SECURITY_KEY;
   }
 
+  async refundProcessingFee(security_key: string, transaction_id: string) {
+    try {
+      const data = {
+        transaction_id,
+        security_key,
+        amount: '1.00',
+        type: 'refund',
+      };
+
+      const response = await axios({
+        method: 'POST',
+        url: `https://seamlesschex.transactiongateway.com/api/transact.php?security_key=${data.security_key}&transactionid=${data.transaction_id}&type=${data.type}&amount=${data.amount}`,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   async handlePurchaseOfSubscriptionItem(request: Request) {
     try {
       const { event_body } = request.body;
@@ -25,6 +45,13 @@ export class SubscriptionService {
         return 'Not a subscription/Or missing identity';
 
       const newArr: string[] = Object.values(merchant_defined_fields);
+
+      const refund = await this.refundProcessingFee(
+        SECURITY_KEY,
+        event_body.transaction_id,
+      );
+
+      console.log('did refund work?', refund);
 
       //helper function to check if subscription exists
       const fuzzyMatchAString = (str: string): boolean => {
@@ -48,7 +75,7 @@ export class SubscriptionService {
       //retrieve key needed for api
       request.body.auth_code = AUTH_CODE;
       const security_key = this.retrieveSecureKey(request);
-      console.log('security key', security_key);
+
       const formattedData = {
         recurring: 'add_subscription',
         plan_id: 'PGCoinCLB29',
