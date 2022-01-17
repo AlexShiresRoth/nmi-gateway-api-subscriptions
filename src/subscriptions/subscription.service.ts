@@ -46,13 +46,6 @@ export class SubscriptionService {
 
       const newArr: string[] = Object.values(merchant_defined_fields);
 
-      const refund = await this.refundProcessingFee(
-        SECURITY_KEY,
-        event_body.transaction_id,
-      );
-
-      console.log('did refund work?', refund);
-
       //helper function to check if subscription exists
       const fuzzyMatchAString = (str: string): boolean => {
         const reg = new RegExp(/coinclub|sub/, 'gi');
@@ -71,7 +64,12 @@ export class SubscriptionService {
         console.log('purchase does not contain a subscription');
         return 'Purchase does not contain subscription';
       }
-
+      //only refund if a subscription is present
+      const refund = await this.refundProcessingFee(
+        SECURITY_KEY,
+        event_body.transaction_id,
+      );
+      console.log('did refund work?', refund);
       //retrieve key needed for api
       request.body.auth_code = AUTH_CODE;
       const security_key = this.retrieveSecureKey(request);
